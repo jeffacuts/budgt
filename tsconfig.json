@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2023",
+    "allowJs": true,
+    "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
