@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useData, categoryColors } from '../data';
-import { TrendingUp, TrendingDown, Wallet, Landmark, ArrowUpRight, Upload, Calendar, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Landmark, ArrowUpRight, Upload, Calendar, Download, Save } from 'lucide-react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
@@ -209,6 +209,44 @@ export default function Overzicht() {
     printWindow.document.close();
   };
 
+  const handleDownloadCSV = () => {
+    const filteredIncome = income.filter(i => i.datum.startsWith(selectedMonth));
+    const filteredExpenses = expenses.filter(e => e.datum.startsWith(selectedMonth));
+
+    const rows = [
+      ["BUDGT FINANCIEEL RAPPORT"],
+      ["Periode", selectedMonth],
+      ["Gegenereerd op", new Date().toLocaleDateString('nl-NL')],
+      [],
+      ["1. INKOMSTEN"],
+      ["Datum", "Omschrijving", "Categorie", "Bedrag"],
+      ...filteredIncome.map(i => [i.datum, i.naam, i.categorie, i.bedrag.toFixed(2)]),
+      [],
+      ["2. UITGAVEN"],
+      ["Datum", "Omschrijving", "Categorie", "Bedrag"],
+      ...filteredExpenses.map(e => [e.datum, e.naam, e.categorie, e.bedrag.toFixed(2)]),
+      [],
+      ["3. SCHULDEN ANALYSIS"],
+      ["Schuldeiser", "Totaal", "Resterend", "Afgelost %"],
+      ...debts.map(d => [d.schuldeiser, d.totaal.toFixed(2), d.resterend.toFixed(2), ((1 - d.resterend / d.totaal) * 100).toFixed(0) + "%"]),
+      [],
+      ["4. CONTACTENLIST"],
+      ["Naam", "Email", "Telefoon", "IBAN", "Kenmerk"],
+      ...contacts.map(c => [c.naam, c.email || "-", c.telefoon || "-", c.iban || "-", c.kenmerk || "-"]),
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `budgt_rapport_${selectedMonth}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const totaalInkomsten = filteredIncome.reduce((s, i) => s + i.bedrag, 0);
   const totaalUitgaven = filteredExpenses.reduce((s, i) => s + i.bedrag, 0);
   const saldo = totaalInkomsten - totaalUitgaven;
@@ -361,6 +399,9 @@ export default function Overzicht() {
           </button>
           <button className="btn-add" onClick={handleExport} style={{ backgroundColor: '#1e1e1e' }}>
             <Download size={18} /> Exporteer Rapport
+          </button>
+          <button className="btn-add" onClick={handleDownloadCSV} style={{ backgroundColor: 'var(--primary)' }}>
+            <Save size={18} /> Opslaan als CSV
           </button>
         </div>
       </div>
