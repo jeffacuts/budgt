@@ -1,24 +1,35 @@
-import { useState } from 'react';
-import { useData } from '../data';
-import { Search, Plus, Trash2, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useData, categoryColors } from '../data';
+import { Search, Plus, Trash2, X, Calendar } from 'lucide-react';
 
 const categorieOptions = ['Salaris', 'Freelance', 'Investering', 'Uitkering', 'Anders'];
 
 export default function Inkomsten() {
-  const { income, addIncome, deleteIncome, contacts } = useData();
+  const { income, expenses, addIncome, deleteIncome, contacts, selectedMonth, setSelectedMonth } = useData();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState('datum');
   const [sortDir, setSortDir] = useState('desc');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ naam: '', categorie: 'Salaris', datum: '', omschrijving: '', bedrag: '' });
 
-  const totaal = income.reduce((s, i) => s + i.bedrag, 0);
+  // Generate list of months from data
+  const availableMonths = useMemo(() => {
+    const months = new Set();
+    [...income, ...expenses].forEach(t => {
+      if (t.datum) months.add(t.datum.substring(0, 7));
+    });
+    const now = new Date();
+    months.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    return Array.from(months).sort().reverse();
+  }, [income, expenses]);
 
   const filtered = income
     .filter(i =>
-      i.categorie.toLowerCase().includes(search.toLowerCase()) ||
-      i.omschrijving.toLowerCase().includes(search.toLowerCase()) ||
-      i.naam.toLowerCase().includes(search.toLowerCase())
+      i.datum.startsWith(selectedMonth) && (
+        i.categorie.toLowerCase().includes(search.toLowerCase()) ||
+        i.omschrijving.toLowerCase().includes(search.toLowerCase()) ||
+        i.naam.toLowerCase().includes(search.toLowerCase())
+      )
     )
     .sort((a, b) => {
       let va = a[sortKey], vb = b[sortKey];
@@ -26,6 +37,10 @@ export default function Inkomsten() {
       if (sortKey === 'datum') return sortDir === 'asc' ? new Date(va) - new Date(vb) : new Date(vb) - new Date(va);
       return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
+
+  const totaalMaand = filtered.reduce((s, i) => s + i.bedrag, 0);
+  const uitgavenMaand = expenses.filter(e => e.datum.startsWith(selectedMonth)).reduce((s, e) => s + e.bedrag, 0);
+  const nettoMaand = totaalMaand - uitgavenMaand;
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -51,11 +66,35 @@ export default function Inkomsten() {
       <div className="page-header">
         <div>
           <h1>Inkomsten</h1>
-          <p className="page-subtitle">Totaal: <span className="text-green">€{totaal.toFixed(2)}</span></p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <Calendar size={16} color="var(--text-muted)" />
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="month-select"
+            >
+              {availableMonths.map(m => {
+                const [y, mm] = m.split('-');
+                const d = new Date(parseInt(y), parseInt(mm) - 1);
+                const label = d.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+                return <option key={m} value={m}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>;
+              })}
+            </select>
+          </div>
         </div>
         <button className="btn-add" onClick={() => setShowModal(true)}>
           <Plus size={18} /> Toevoegen
         </button>
+      </div>
+
+      <div className="summary-info-card">
+        <p>
+          Deze maand: <strong className="text-green">€{totaalMaand.toFixed(2)}</strong> binnengekomen 
+          <span className="separator">|</span>
+          Uitgaven: <span className="text-red">€{uitgavenMaand.toFixed(2)}</span>
+          <span className="separator">|</span>
+          Netto over: <strong className={nettoMaand >= 0 ? 'text-green' : 'text-red'}>€{nettoMaand.toFixed(2)}</strong>
+        </p>
       </div>
 
       <div className="search-bar">
@@ -84,7 +123,22 @@ export default function Inkomsten() {
             {filtered.map(item => (
               <tr key={item.id}>
                 <td>{item.naam}</td>
-                <td>{item.categorie}</td>
+                <td>
+                  <span style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    padding: '2px 8px', 
+                    borderRadius: '12px', 
+                    backgroundColor: `${categoryColors[item.categorie] || categoryColors.Overig}15`, 
+                    color: categoryColors[item.categorie] || categoryColors.Overig,
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: categoryColors[item.categorie] || categoryColors.Overig }}></span>
+                    {item.categorie}
+                  </span>
+                </td>
                 <td>{formatDate(item.datum)}</td>
                 <td>{item.omschrijving}</td>
                 <td className="text-green">+€{item.bedrag.toFixed(2)}</td>

@@ -18,7 +18,7 @@ export default function Layout({ children }) {
             <Landmark size={24} />
           </div>
           <div>
-            <div className="brand-name">FinanceFlow</div>
+            <div className="brand-name">Budgt</div>
             <div className="brand-sub">Persoonlijk beheer</div>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function Layout({ children }) {
           ))}
         </nav>
         <div className="sidebar-footer">
-          © 2026 FinanceFlow
+          © 2026 Budgt
         </div>
       </aside>
       <main className="main-content">

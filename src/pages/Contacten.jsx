@@ -25,7 +25,7 @@ export default function Contacten() {
       <div className="page-header">
         <div>
           <h1>Contacten</h1>
-          <p className="page-subtitle text-green">{contacts.length} contacten</p>
+          <p className="page-subtitle" style={{ color: 'var(--primary)', fontWeight: '600' }}>{contacts.length} contacten</p>
         </div>
         <button className="btn-add" onClick={() => setShowModal(true)}>
           <Plus size={18} /> Toevoegen

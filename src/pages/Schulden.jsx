@@ -136,15 +136,15 @@ export default function Schulden() {
                         <div className="contact-tooltip">
                           {(() => {
                             const c = contacts.find(c => c.naam === debt.schuldeiser);
-                            if (!c) return <div className="tooltip-inner" style={{color: '#9ca3af', fontSize: '12px'}}>Geen contactgegevens gevonden.</div>;
+                            if (!c) return <div className="tooltip-inner" style={{color: 'var(--text-muted)', fontSize: '12px'}}>Geen contactgegevens gevonden.</div>;
                             return (
                               <div className="tooltip-inner">
                                 <button className="tooltip-close" onClick={() => setActiveTooltip(null)}><X size={14}/></button>
-                                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#1e1e1e' }}>Contactdetails</h4>
-                                {c.iban && <div style={{ fontSize: '12px', color: '#374151' }}><strong>IBAN:</strong> {c.iban}</div>}
-                                {c.email && <div style={{ fontSize: '12px', color: '#374151' }}><strong>Email:</strong> {c.email}</div>}
-                                {c.telefoon && <div style={{ fontSize: '12px', color: '#374151' }}><strong>Tel:</strong> {c.telefoon}</div>}
-                                {!c.iban && !c.email && !c.telefoon && <div style={{ fontSize: '12px', color: '#9ca3af' }}>Geen extra gegevens bekend.</div>}
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-main)', fontWeight: '600' }}>Contactgegevens</h4>
+                                {c.iban && <div className="tooltip-row"><strong>IBAN:</strong> {c.iban}</div>}
+                                {c.email && <div className="tooltip-row"><strong>Email:</strong> {c.email}</div>}
+                                {c.telefoon && <div className="tooltip-row"><strong>Tel:</strong> {c.telefoon}</div>}
+                                {!c.iban && !c.email && !c.telefoon && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Geen details bekend.</div>}
                               </div>
                             );
                           })()}
@@ -163,12 +163,12 @@ export default function Schulden() {
                     style={{ cursor: editingDebt === debt.id ? 'default' : 'pointer', verticalAlign: 'middle' }}
                   >
                     {editingDebt === debt.id ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} onClick={e => e.stopPropagation()}>
-                        <span style={{color: '#6b7280'}}>€</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                        <span style={{color: 'var(--text-muted)'}}>€</span>
                         <input
                           type="number"
                           step="0.01"
-                          style={{ width: '60px', padding: '2px 4px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                          className="edit-input"
                           value={editForm.regeling}
                           onChange={e => setEditForm(prev => ({ ...prev, regeling: e.target.value }))}
                           placeholder="Bedrag"
@@ -183,12 +183,12 @@ export default function Schulden() {
                             }
                           }}
                         />
-                        <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '4px' }}>dag:</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '4px' }}>dag:</span>
                         <input
                           type="number"
                           min="1"
                           max="31"
-                          style={{ width: '40px', padding: '2px 4px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                          className="edit-input-small"
                           value={editForm.betaaldatum}
                           onChange={e => setEditForm(prev => ({ ...prev, betaaldatum: e.target.value }))}
                           placeholder="-"
@@ -204,7 +204,7 @@ export default function Schulden() {
                         />
                         <button 
                           className="btn-icon" 
-                          style={{ color: '#16a34a', padding: '2px', marginLeft: '2px' }}
+                          style={{ color: 'var(--primary)', padding: '4px' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             updateDebt(debt.id, {
@@ -214,7 +214,7 @@ export default function Schulden() {
                             setEditingDebt(null);
                           }}
                         >
-                          <Check size={16} />
+                          <Check size={18} />
                         </button>
                       </div>
                     ) : (
@@ -261,22 +261,22 @@ export default function Schulden() {
             <tr className="totaal-row">
               <td style={{ verticalAlign: 'top' }}><strong>Overzicht</strong></td>
               <td style={{ verticalAlign: 'top' }}>
-                <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 400 }}>Totale Schuld</div>
-                <div style={{ fontWeight: 600, color: '#1e1e1e' }}>€{totaalBedrag.toFixed(2)}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>Totaal Schuld</div>
+                <div style={{ fontWeight: 700, fontSize: '16px' }}>€{totaalBedrag.toFixed(2)}</div>
               </td>
               <td style={{ verticalAlign: 'top' }}>
-                <div style={{ color: '#15803d', fontWeight: 700 }}>
-                  <span style={{ fontWeight: 400, fontSize: '12px', color: '#6b7280', marginRight: '4px' }}>Totaal p/m</span>
-                  €{totaalRegeling.toFixed(2)}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>Totaal p/m</span>
+                  <div style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '16px' }}>€{totaalRegeling.toFixed(2)}</div>
                 </div>
               </td>
               <td style={{ verticalAlign: 'top' }}>
-                <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 400 }}>Totaal Afgelost</div>
-                <div style={{ color: '#16a34a', fontWeight: 600 }}>€{afgelost.toFixed(2)}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>Totaal Afgelost</div>
+                <div style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '16px' }}>€{afgelost.toFixed(2)}</div>
               </td>
               <td className="text-red" style={{ verticalAlign: 'top' }}>
-                <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 400 }}>Openstaand Saldo</div>
-                <div style={{ fontSize: '18px', fontWeight: 700 }}>€{openstaand.toFixed(2)}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>Openstaand</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>€{openstaand.toFixed(2)}</div>
               </td>
               <td></td>
             </tr>
