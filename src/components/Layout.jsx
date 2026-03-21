@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ArrowDownLeft, ArrowUpRight, Landmark, Users } from 'lucide-react';
 
 const navItems = [
-  { to: '/', label: 'Overzicht', icon: LayoutDashboard },
+  { to: '/overzicht', label: 'Overzicht', icon: LayoutDashboard },
   { to: '/inkomsten', label: 'Inkomsten', icon: ArrowDownLeft },
   { to: '/uitgaven', label: 'Uitgaven', icon: ArrowUpRight },
   { to: '/schulden', label: 'Schulden', icon: Landmark },

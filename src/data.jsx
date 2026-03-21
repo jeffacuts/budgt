@@ -44,6 +44,9 @@ function loadLocal(key, defaultValue) {
 }
 
 export function DataProvider({ children }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('ff_auth') === 'true';
+  });
   const [income, setIncome] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [debts, setDebts] = useState([]);
@@ -88,6 +91,20 @@ export function DataProvider({ children }) {
   useEffect(() => { localStorage.setItem('ff_expenses', JSON.stringify(expenses)); }, [expenses]);
   useEffect(() => { localStorage.setItem('ff_debts', JSON.stringify(debts)); }, [debts]);
   useEffect(() => { localStorage.setItem('ff_contacts', JSON.stringify(contacts)); }, [contacts]);
+  useEffect(() => { localStorage.setItem('ff_auth', isAuthenticated); }, [isAuthenticated]);
+
+  const login = (email, password) => {
+    // Basic verification for demo purposes
+    if (email && password) {
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+  };
 
   const addIncome = async (item) => {
     try {
@@ -187,6 +204,7 @@ export function DataProvider({ children }) {
       debts, addDebt, deleteDebt, updateDebt,
       contacts, addContact, deleteContact,
       selectedMonth, setSelectedMonth,
+      isAuthenticated, login, logout,
       refreshData: fetchData
     }}>
       {children}

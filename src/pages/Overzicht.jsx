@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useData, categoryColors } from '../data';
-import { TrendingUp, TrendingDown, Wallet, Landmark, ArrowUpRight, Upload, Calendar, Download, Save } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Landmark, ArrowUpRight, Calendar, Download, Save } from 'lucide-react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
@@ -8,7 +8,6 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 
 export default function Overzicht() {
   const { income, expenses, debts, contacts, selectedMonth, setSelectedMonth, refreshData } = useData();
-  const fileInputRef = useRef(null);
 
   // Generate list of months from data
   const availableMonths = useMemo(() => {
@@ -29,32 +28,6 @@ export default function Overzicht() {
   const filteredExpenses = useMemo(() => 
     expenses.filter(e => e.datum.startsWith(selectedMonth)), 
   [expenses, selectedMonth]);
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch('/api/upload-bank', {
-        method: 'POST',
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        alert(data.status || "Bankgegevens succesvol bijgewerkt!");
-        refreshData(); 
-      } else {
-        const errData = await res.json();
-        alert(`Fout: ${errData.detail || "Upload mislukt"}`);
-      }
-    } catch (err) {
-      console.error("Upload mislukt", err);
-      alert("Er is iets misgegaan bij het uploaden.");
-    }
-  };
 
   const handleExport = () => {
     const printWindow = window.open('', '_blank');
@@ -387,21 +360,11 @@ export default function Overzicht() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="file" 
-            accept=".csv" 
-            style={{ display: 'none' }} 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-          />
-          <button className="btn-add" onClick={() => fileInputRef.current.click()}>
-            <Upload size={18} /> Importeer ASN CSV
-          </button>
           <button className="btn-add" onClick={handleExport} style={{ backgroundColor: '#1e1e1e' }}>
-            <Download size={18} /> Exporteer Rapport
+            <Download size={18} /> Printen
           </button>
           <button className="btn-add" onClick={handleDownloadCSV} style={{ backgroundColor: 'var(--primary)' }}>
-            <Save size={18} /> Opslaan als CSV
+            <Save size={18} /> Exporteer
           </button>
         </div>
       </div>
