@@ -1,22 +1,42 @@
 import { useState } from 'react';
 import { useData } from '../data';
-import { Search, Plus, Trash2, X } from 'lucide-react';
+import { Search, Plus, Trash2, Pencil, X } from 'lucide-react';
+
+const emptyForm = { naam: '', email: '', telefoon: '', iban: '', kenmerk: '', notities: '' };
 
 export default function Contacten() {
-  const { contacts, addContact, deleteContact } = useData();
+  const { contacts, addContact, updateContact, deleteContact } = useData();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ naam: '', email: '', telefoon: '', iban: '', kenmerk: '', notities: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
 
   const filtered = contacts.filter(c =>
     c.naam.toLowerCase().includes(search.toLowerCase()) ||
     (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const openAdd = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  };
+
+  const openEdit = (c) => {
+    setEditingId(c.id);
+    setForm({ naam: c.naam || '', email: c.email || '', telefoon: c.telefoon || '', iban: c.iban || '', kenmerk: c.kenmerk || '', notities: c.notities || '' });
+    setShowModal(true);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    addContact({ ...form });
-    setForm({ naam: '', email: '', telefoon: '', iban: '', kenmerk: '', notities: '' });
+    if (editingId) {
+      updateContact(editingId, { ...form });
+    } else {
+      addContact({ ...form });
+    }
+    setForm(emptyForm);
+    setEditingId(null);
     setShowModal(false);
   };
 
@@ -27,7 +47,7 @@ export default function Contacten() {
           <h1>Contacten</h1>
           <p className="page-subtitle" style={{ color: 'var(--primary)', fontWeight: '600' }}>{contacts.length} contacten</p>
         </div>
-        <button className="btn-add" onClick={() => setShowModal(true)}>
+        <button className="btn-add" onClick={openAdd}>
           <Plus size={18} /> Toevoegen
         </button>
       </div>
@@ -45,7 +65,10 @@ export default function Contacten() {
               {filtered.map(c => (
                 <tr key={c.id}>
                   <td>{c.naam}</td><td>{c.email}</td><td>{c.telefoon}</td><td>{c.iban}</td><td>{c.kenmerk}</td><td>{c.notities}</td>
-                  <td><button className="btn-icon" onClick={() => deleteContact(c.id)}><Trash2 size={16} /></button></td>
+                  <td style={{ display: 'flex', gap: '4px' }}>
+                    <button className="btn-icon" onClick={() => openEdit(c)} style={{ color: '#6b7280' }}><Pencil size={16} /></button>
+                    <button className="btn-icon" onClick={() => deleteContact(c.id)}><Trash2 size={16} /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -53,11 +76,11 @@ export default function Contacten() {
         </div>
       )}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setEditingId(null); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Contact toevoegen</h2>
-              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={20} /></button>
+              <h2>{editingId ? 'Contact bewerken' : 'Contact toevoegen'}</h2>
+              <button className="btn-icon" onClick={() => { setShowModal(false); setEditingId(null); }}><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group"><label>Naam</label><input type="text" required value={form.naam} onChange={e => setForm({...form, naam: e.target.value})} /></div>
@@ -66,7 +89,7 @@ export default function Contacten() {
               <div className="form-group"><label>IBAN</label><input type="text" value={form.iban} onChange={e => setForm({...form, iban: e.target.value})} placeholder="bijv. NL00 INGB 0000 0000 00" /></div>
               <div className="form-group"><label>Kenmerk / Omschrijving</label><input type="text" value={form.kenmerk} onChange={e => setForm({...form, kenmerk: e.target.value})} placeholder="bijv. Dossiernummer" /></div>
               <div className="form-group"><label>Notities</label><input type="text" value={form.notities} onChange={e => setForm({...form, notities: e.target.value})} placeholder="bijv. Bewindvoerder" /></div>
-              <button type="submit" className="btn-add" style={{width:'100%'}}>Toevoegen</button>
+              <button type="submit" className="btn-add" style={{width:'100%'}}>{editingId ? 'Opslaan' : 'Toevoegen'}</button>
             </form>
           </div>
         </div>

@@ -31,148 +31,251 @@ export default function Overzicht() {
 
   const handleExport = () => {
     const printWindow = window.open('', '_blank');
-    const now = new Date().toLocaleDateString('nl-NL');
+    const now = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+    const [y, mm] = selectedMonth.split('-');
+    const maandNaam = new Date(parseInt(y), parseInt(mm) - 1).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    const maandLabel = maandNaam.charAt(0).toUpperCase() + maandNaam.slice(1);
     
     const filteredIncome = income.filter(i => i.datum.startsWith(selectedMonth));
     const filteredExpenses = expenses.filter(e => e.datum.startsWith(selectedMonth));
     
     const totalIncome = filteredIncome.reduce((sum, i) => sum + i.bedrag, 0);
     const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.bedrag, 0);
+    const saldoReport = totalIncome - totalExpenses;
     const totalDebt = debts.reduce((sum, d) => sum + d.resterend, 0);
+    const totalDebtOriginal = debts.reduce((sum, d) => sum + d.totaal, 0);
+
+    const fmt = (n) => '€' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = (d) => new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
 
     const html = `
       <html>
         <head>
-          <title>Budgt Financieel Rapport - ${selectedMonth}</title>
+          <title>Budget Rapport - ${maandLabel}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
           <style>
-            body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1f2937; padding: 40px; line-height: 1.5; background: white; }
-            .header-print { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #22c55e; padding-bottom: 20px; margin-bottom: 30px; }
-            .logo-print { font-size: 24px; font-weight: bold; color: #111827; }
-            h2 { color: #111827; margin-top: 40px; margin-bottom: 15px; font-size: 18px; border-left: 4px solid #22c55e; padding-left: 12px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-            .summary-card { padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; }
-            .summary-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-            .summary-value { font-size: 18px; font-weight: 700; color: #111827; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { text-align: left; background: #f3f4f6; padding: 10px 12px; border-bottom: 1px solid #d1d5db; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #4b5563; }
-            td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #374151; }
-            .positive { color: #059669; font-weight: 500; }
-            .negative { color: #dc2626; font-weight: 500; }
-            .footer-print { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; text-align: center; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Inter', system-ui, sans-serif; color: #1a1a2e; padding: 0; line-height: 1.6; background: white; }
+            
+            .report { max-width: 800px; margin: 0 auto; padding: 48px 40px; }
+            
+            /* Header */
+            .report-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 3px solid #1a1a2e; }
+            .report-brand { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: #1a1a2e; }
+            .report-brand span { color: #22c55e; }
+            .report-title { font-size: 14px; color: #6b7280; margin-top: 4px; font-weight: 400; }
+            .report-meta { text-align: right; font-size: 12px; color: #6b7280; line-height: 1.8; }
+            .report-meta strong { color: #1a1a2e; font-weight: 600; }
+            
+            /* Summary Cards */
+            .summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 40px; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; }
+            .s-card { padding: 20px; background: #fafafa; border-right: 1px solid #e5e7eb; }
+            .s-card:last-child { border-right: none; }
+            .s-card.highlight { background: #f0fdf4; }
+            .s-card.danger { background: #fef2f2; }
+            .s-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 6px; }
+            .s-value { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+            .s-value.green { color: #059669; }
+            .s-value.red { color: #dc2626; }
+            .s-sub { font-size: 10px; color: #9ca3af; margin-top: 4px; }
+            
+            /* Sections */
+            .section { margin-bottom: 36px; }
+            .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+            .section-num { width: 28px; height: 28px; background: #1a1a2e; color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+            .section-title { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+            .section-subtitle { font-size: 11px; color: #9ca3af; margin-left: auto; }
+            
+            /* Tables */
+            table { width: 100%; border-collapse: collapse; }
+            thead th { text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b7280; background: #f8f9fa; border-bottom: 2px solid #e5e7eb; }
+            thead th:last-child { text-align: right; }
+            tbody td { padding: 12px 14px; font-size: 13px; color: #374151; border-bottom: 1px solid #f1f3f5; }
+            tbody td:last-child { text-align: right; font-weight: 600; }
+            tbody tr:hover { background: #fafbfc; }
+            .total-row td { border-top: 2px solid #1a1a2e; border-bottom: none; font-weight: 700; font-size: 14px; color: #1a1a2e; padding-top: 14px; }
+            .positive { color: #059669; }
+            .negative { color: #dc2626; }
+            .empty-row td { text-align: center !important; color: #9ca3af; font-style: italic; padding: 24px; }
+            
+            /* Progress bar */
+            .progress-wrap { display: flex; align-items: center; gap: 10px; }
+            .progress-bg { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+            .progress-fg { height: 100%; background: #22c55e; border-radius: 4px; }
+            .progress-pct { font-size: 12px; font-weight: 600; color: #374151; min-width: 40px; text-align: right; }
+            
+            /* Footer */
+            .report-footer { margin-top: 48px; padding-top: 20px; border-top: 2px solid #f1f3f5; display: flex; justify-content: space-between; align-items: center; }
+            .footer-left { font-size: 10px; color: #9ca3af; }
+            .footer-right { font-size: 10px; color: #9ca3af; }
+            .footer-brand { font-weight: 700; color: #6b7280; }
+            
+            /* Watermark */
+            .watermark { position: fixed; bottom: 20px; right: 20px; font-size: 9px; color: #d1d5db; }
+            
+            /* Page break */
+            .page-break { page-break-before: always; padding-top: 20px; }
+            
             @media print {
-              body { padding: 20px; }
+              body { padding: 0; }
+              .report { padding: 24px 20px; }
               .no-print { display: none; }
               tr { page-break-inside: avoid; }
+              .section { page-break-inside: avoid; }
             }
           </style>
         </head>
         <body>
-          <div class="header-print">
-            <div class="logo-print">Budgt Rapport</div>
-            <div style="text-align: right; font-size: 12px; color: #6b7280;">
-              Periode: ${selectedMonth}<br>Datum: ${now}
+          <div class="report">
+            <div class="report-header">
+              <div>
+                <div class="report-brand">Budget<span>.</span></div>
+                <div class="report-title">Financieel Maandrapport</div>
+              </div>
+              <div class="report-meta">
+                <strong>Periode:</strong> ${maandLabel}<br>
+                <strong>Gegenereerd:</strong> ${now}<br>
+                <strong>Door:</strong> Jeffrey Klein
+              </div>
             </div>
-          </div>
-          
-          <div class="summary-grid">
-            <div class="summary-card">
-              <div class="summary-label">Totaal Inkomsten</div>
-              <div class="summary-value positive">€${totalIncome.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</div>
+            
+            <div class="summary-strip">
+              <div class="s-card highlight">
+                <div class="s-label">Inkomsten</div>
+                <div class="s-value green">${fmt(totalIncome)}</div>
+                <div class="s-sub">${filteredIncome.length} transactie${filteredIncome.length !== 1 ? 's' : ''}</div>
+              </div>
+              <div class="s-card danger">
+                <div class="s-label">Uitgaven</div>
+                <div class="s-value red">${fmt(totalExpenses)}</div>
+                <div class="s-sub">${filteredExpenses.length} transactie${filteredExpenses.length !== 1 ? 's' : ''}</div>
+              </div>
+              <div class="s-card">
+                <div class="s-label">Netto Saldo</div>
+                <div class="s-value ${saldoReport >= 0 ? 'green' : 'red'}">${fmt(saldoReport)}</div>
+                <div class="s-sub">${saldoReport >= 0 ? 'Positief' : 'Negatief'}</div>
+              </div>
+              <div class="s-card">
+                <div class="s-label">Openstaande Schuld</div>
+                <div class="s-value red">${fmt(totalDebt)}</div>
+                <div class="s-sub">van ${fmt(totalDebtOriginal)} totaal</div>
+              </div>
             </div>
-            <div class="summary-card">
-              <div class="summary-label">Totaal Uitgaven</div>
-              <div class="summary-value negative">€${totalExpenses.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</div>
+
+            <div class="section">
+              <div class="section-header">
+                <div class="section-num">1</div>
+                <div class="section-title">Inkomsten</div>
+                <div class="section-subtitle">Totaal: ${fmt(totalIncome)}</div>
+              </div>
+              <table>
+                <thead><tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th>Bedrag</th></tr></thead>
+                <tbody>
+                  ${filteredIncome.length === 0 ? '<tr class="empty-row"><td colspan="4">Geen inkomsten in deze periode</td></tr>' : ''}
+                  ${filteredIncome.map(i => `
+                    <tr>
+                      <td>${fmtDate(i.datum)}</td>
+                      <td>${i.omschrijving || i.naam}</td>
+                      <td>${i.categorie}</td>
+                      <td class="positive">${fmt(i.bedrag)}</td>
+                    </tr>
+                  `).join('')}
+                  ${filteredIncome.length > 0 ? `<tr class="total-row"><td colspan="3">Subtotaal Inkomsten</td><td class="positive">${fmt(totalIncome)}</td></tr>` : ''}
+                </tbody>
+              </table>
             </div>
-            <div class="summary-card">
-              <div class="summary-label">Netto Saldo</div>
-              <div class="summary-value">€${(totalIncome - totalExpenses).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</div>
+
+            <div class="section">
+              <div class="section-header">
+                <div class="section-num">2</div>
+                <div class="section-title">Uitgaven</div>
+                <div class="section-subtitle">Totaal: ${fmt(totalExpenses)}</div>
+              </div>
+              <table>
+                <thead><tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th>Bedrag</th></tr></thead>
+                <tbody>
+                  ${filteredExpenses.length === 0 ? '<tr class="empty-row"><td colspan="4">Geen uitgaven in deze periode</td></tr>' : ''}
+                  ${filteredExpenses.map(e => `
+                    <tr>
+                      <td>${fmtDate(e.datum)}</td>
+                      <td>${e.omschrijving || e.naam}</td>
+                      <td>${e.categorie}</td>
+                      <td class="negative">${fmt(e.bedrag)}</td>
+                    </tr>
+                  `).join('')}
+                  ${filteredExpenses.length > 0 ? `<tr class="total-row"><td colspan="3">Subtotaal Uitgaven</td><td class="negative">${fmt(totalExpenses)}</td></tr>` : ''}
+                </tbody>
+              </table>
             </div>
-            <div class="summary-card">
-              <div class="summary-label">Openstaande Schuld</div>
-              <div class="summary-value negative">€${totalDebt.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</div>
+
+            <div class="page-break"></div>
+
+            <div class="section">
+              <div class="section-header">
+                <div class="section-num">3</div>
+                <div class="section-title">Schulden Overzicht</div>
+                <div class="section-subtitle">Resterend: ${fmt(totalDebt)}</div>
+              </div>
+              <table>
+                <thead><tr><th>Schuldeiser</th><th>Oorspronkelijk</th><th>Resterend</th><th>Voortgang</th></tr></thead>
+                <tbody>
+                  ${debts.length === 0 ? '<tr class="empty-row"><td colspan="4">Geen schulden geregistreerd</td></tr>' : ''}
+                  ${debts.map(d => {
+                    const pct = Math.round((1 - d.resterend / d.totaal) * 100);
+                    return `
+                    <tr>
+                      <td><strong>${d.schuldeiser}</strong>${d.subtekst ? '<br><span style="font-size:11px;color:#9ca3af">' + d.subtekst + '</span>' : ''}</td>
+                      <td>${fmt(d.totaal)}</td>
+                      <td class="negative">${fmt(d.resterend)}</td>
+                      <td style="text-align:left">
+                        <div class="progress-wrap">
+                          <div class="progress-bg"><div class="progress-fg" style="width:${pct}%"></div></div>
+                          <div class="progress-pct">${pct}%</div>
+                        </div>
+                      </td>
+                    </tr>`;
+                  }).join('')}
+                  ${debts.length > 0 ? `<tr class="total-row"><td>Totaal</td><td>${fmt(totalDebtOriginal)}</td><td class="negative">${fmt(totalDebt)}</td><td></td></tr>` : ''}
+                </tbody>
+              </table>
             </div>
-          </div>
 
-          <h2>1. Inkomstenoverzicht</h2>
-          <table>
-            <thead>
-              <tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th>Bedrag</th></tr>
-            </thead>
-            <tbody>
-              ${filteredIncome.map(i => `
-                <tr>
-                  <td>${i.datum}</td>
-                  <td>${i.naam}</td>
-                  <td>${i.categorie}</td>
-                  <td class="positive">€${i.bedrag.toFixed(2)}</td>
-                </tr>
-              `).join('')}
-              ${filteredIncome.length === 0 ? '<tr><td colspan="4" style="text-align:center">Geen inkomsten in deze periode</td></tr>' : ''}
-            </tbody>
-          </table>
+            <div class="section">
+              <div class="section-header">
+                <div class="section-num">4</div>
+                <div class="section-title">Contacten</div>
+                <div class="section-subtitle">${contacts.length} contact${contacts.length !== 1 ? 'en' : ''}</div>
+              </div>
+              <table>
+                <thead><tr><th>Naam</th><th>IBAN</th><th>Contact</th><th>Kenmerk</th></tr></thead>
+                <tbody>
+                  ${contacts.length === 0 ? '<tr class="empty-row"><td colspan="4">Geen contacten geregistreerd</td></tr>' : ''}
+                  ${contacts.map(c => `
+                    <tr>
+                      <td><strong>${c.naam}</strong></td>
+                      <td style="font-family:monospace;font-size:12px">${c.iban || '—'}</td>
+                      <td>${c.telefoon || ''}${c.telefoon && c.email ? '<br>' : ''}${c.email || ''}${!c.telefoon && !c.email ? '—' : ''}</td>
+                      <td>${c.kenmerk || '—'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
 
-          <h2>2. Uitgavenoverzicht</h2>
-          <table>
-            <thead>
-              <tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th>Bedrag</th></tr>
-            </thead>
-            <tbody>
-              ${filteredExpenses.map(e => `
-                <tr>
-                  <td>${e.datum}</td>
-                  <td>${e.naam}</td>
-                  <td>${e.categorie}</td>
-                  <td class="negative">€${e.bedrag.toFixed(2)}</td>
-                </tr>
-              `).join('')}
-              ${filteredExpenses.length === 0 ? '<tr><td colspan="4" style="text-align:center">Geen uitgaven in deze periode</td></tr>' : ''}
-            </tbody>
-          </table>
-
-          <div style="page-break-before: always;"></div>
-
-          <h2>3. Schulden Analyse</h2>
-          <table>
-            <thead>
-              <tr><th>Schuldeiser</th><th>Totaal</th><th>Resterend</th><th>Voortgang</th></tr>
-            </thead>
-            <tbody>
-              ${debts.map(d => `
-                <tr>
-                  <td>${d.schuldeiser}</td>
-                  <td>€${d.totaal.toFixed(2)}</td>
-                  <td>€${d.resterend.toFixed(2)}</td>
-                  <td>${((1 - d.resterend / d.totaal) * 100).toFixed(0)}% afgelost</td>
-                </tr>
-              `).join('')}
-              ${debts.length === 0 ? '<tr><td colspan="4" style="text-align:center">Geen schulden geregistreerd</td></tr>' : ''}
-            </tbody>
-          </table>
-
-          <h2>4. Contactenlijst</h2>
-          <table>
-            <thead>
-              <tr><th>Naam</th><th>IBAN</th><th>Telefoon / Email</th><th>Kenmerk</th></tr>
-            </thead>
-            <tbody>
-              ${contacts.map(c => `
-                <tr>
-                  <td>${c.naam}</td>
-                  <td>${c.iban || '-'}</td>
-                  <td>${c.telefoon || c.email || '-'}</td>
-                  <td>${c.kenmerk || '-'}</td>
-                </tr>
-              `).join('')}
-              ${contacts.length === 0 ? '<tr><td colspan="4" style="text-align:center">Geen contacten geregistreerd</td></tr>' : ''}
-            </tbody>
-          </table>
-
-          <div class="footer-print">
-            Dit rapport is gegenereerd door <strong>Budgt</strong> - Persoonlijk Financieel Beheer.
+            <div class="report-footer">
+              <div class="footer-left">
+                <span class="footer-brand">Budget</span> — Persoonlijk Financieel Beheer<br>
+                Dit rapport is automatisch gegenereerd en dient uitsluitend ter informatie.
+              </div>
+              <div class="footer-right">
+                Pagina 1 van 2<br>
+                ${now}
+              </div>
+            </div>
           </div>
           
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
+            window.onload = () => { setTimeout(() => { window.print(); }, 600); };
           </script>
         </body>
       </html>
