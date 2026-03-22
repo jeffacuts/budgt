@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ArrowDownLeft, ArrowUpRight, Landmark, Users } from 'lucide-react';
 
+
 const navItems = [
   { to: '/overzicht', label: 'Overzicht', icon: LayoutDashboard },
   { to: '/inkomsten', label: 'Inkomsten', icon: ArrowDownLeft },
@@ -14,13 +15,7 @@ export default function Layout({ children }) {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-icon">
-            <Landmark size={24} />
-          </div>
-          <div>
-            <div className="brand-name">Budgt</div>
-            <div className="brand-sub">Persoonlijk beheer</div>
-          </div>
+          <span style={{ fontSize: '22px', fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>Budget</span>
         </div>
         <nav className="sidebar-nav">
           {navItems.map(item => (
@@ -39,8 +34,25 @@ export default function Layout({ children }) {
           © 2026 Budgt
         </div>
       </aside>
-      <main className="main-content">
-        {children}
+      <main className="main-content" style={{ position: 'relative', overflow: 'hidden' }}>
+        <video
+          autoPlay muted loop playsInline
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            opacity: 0.5,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <source src="/background.mp4" type="video/mp4" />
+        </video>
+        <div style={{ position: 'relative', zIndex: 1, height: '100%', overflow: 'auto' }}>
+          {children}
+        </div>
       </main>
     </div>
   );

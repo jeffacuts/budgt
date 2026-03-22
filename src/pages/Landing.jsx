@@ -11,10 +11,7 @@ export default function Landing() {
 
   useEffect(() => {
     setMounted(true);
-    if (isAuthenticated) {
-      navigate("/overzicht");
-    }
-  }, [isAuthenticated, navigate]);
+  }, []);
 
   const handleLogin = () => {
     login("beheer", "beheer");
@@ -115,34 +112,27 @@ export default function Landing() {
             className="text-sm sm:text-base tracking-widest uppercase text-center pl-10"
             style={{
               fontFamily: "'Inter', sans-serif",
-              color: "rgba(255, 255, 255, 0.5)",
-              fontWeight: 300,
+              color: "rgba(255, 255, 255, 0.85)",
+              fontWeight: 400,
               letterSpacing: "0.25em",
+              textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
             }}
           >
             Helderheid in elk detail
           </p>
+          <p
+            className="mt-4 text-xs sm:text-sm text-center pl-10"
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              color: "rgba(255, 255, 255, 0.65)",
+              textShadow: "0 1px 6px rgba(0, 0, 0, 0.3)",
+              fontWeight: 300,
+              letterSpacing: "0.1em",
+            }}
+          >
+            by Jeffrey Klein
+          </p>
         </div>
-      </div>
-
-      {/* Bottom text */}
-      <div
-        className="absolute bottom-6 left-0 right-0 text-center z-10"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transition: "opacity 1s ease 0.6s",
-        }}
-      >
-        <p
-          className="text-xs"
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            color: "rgba(255, 255, 255, 0.25)",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Budget beheer — Veilig & Vertrouwd
-        </p>
       </div>
     </div>
   );
