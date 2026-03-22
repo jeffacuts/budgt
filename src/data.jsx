@@ -47,10 +47,10 @@ export function DataProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('ff_auth') === 'true';
   });
-  const [income, setIncome] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [debts, setDebts] = useState([]);
-  const [contacts, setContacts] = useState([]);
+  const [income, setIncome] = useState(() => loadLocal('ff_income', defaultIncome));
+  const [expenses, setExpenses] = useState(() => loadLocal('ff_expenses', defaultExpenses));
+  const [debts, setDebts] = useState(() => loadLocal('ff_debts', defaultDebts));
+  const [contacts, setContacts] = useState(() => loadLocal('ff_contacts', defaultContacts));
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -107,64 +107,76 @@ export function DataProvider({ children }) {
   };
 
   const addIncome = async (item) => {
+    const newItem = { ...item, id: Date.now() };
+    setIncome(prev => [newItem, ...prev]);
     try {
-      const res = await fetch(`${API_BASE}/transactions`, {
+      await fetch(`${API_BASE}/transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...item, type: 'inkomsten' })
+        body: JSON.stringify({ ...newItem, type: 'inkomsten' })
       });
-      if (!res.ok) throw new Error("Dubbele transactie of serverfout");
-      fetchData();
     } catch (err) {
-      console.error(err);
-      setIncome(prev => [{ ...item, id: Date.now() }, ...prev]);
+      console.warn('API niet bereikbaar, inkomst lokaal opgeslagen.');
     }
   };
 
   const deleteIncome = async (id) => {
-    await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' }).catch(() => {});
     setIncome(prev => prev.filter(i => i.id !== id));
+    try {
+      await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API niet bereikbaar, inkomst lokaal verwijderd.');
+    }
   };
 
   const addExpense = async (item) => {
+    const newItem = { ...item, id: Date.now() };
+    setExpenses(prev => [newItem, ...prev]);
     try {
-      const res = await fetch(`${API_BASE}/transactions`, {
+      await fetch(`${API_BASE}/transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...item, type: 'uitgaven' })
+        body: JSON.stringify({ ...newItem, type: 'uitgaven' })
       });
-      if (!res.ok) throw new Error("Dubbele transactie of serverfout");
-      fetchData();
     } catch (err) {
-      console.error(err);
-      setExpenses(prev => [{ ...item, id: Date.now() }, ...prev]);
+      console.warn('API niet bereikbaar, uitgave lokaal opgeslagen.');
     }
   };
 
   const deleteExpense = async (id) => {
-    await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' }).catch(() => {});
     setExpenses(prev => prev.filter(i => i.id !== id));
+    try {
+      await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API niet bereikbaar, uitgave lokaal verwijderd.');
+    }
   };
 
   const addDebt = async (item) => {
+    const newItem = { ...item, id: Date.now() };
+    setDebts(prev => [...prev, newItem]);
     try {
       await fetch(`${API_BASE}/debts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
+        body: JSON.stringify(newItem)
       });
-      fetchData();
     } catch (err) {
-      setDebts(prev => [...prev, { ...item, id: Date.now() }]);
+      console.warn('API niet bereikbaar, schuld lokaal opgeslagen.');
     }
   };
 
   const deleteDebt = async (id) => {
-    await fetch(`${API_BASE}/debts/${id}`, { method: 'DELETE' }).catch(() => {});
     setDebts(prev => prev.filter(i => i.id !== id));
+    try {
+      await fetch(`${API_BASE}/debts/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API niet bereikbaar, schuld lokaal verwijderd.');
+    }
   };
 
   const updateDebt = async (id, updatedFields) => {
+    setDebts(prev => prev.map(d => d.id === id ? { ...d, ...updatedFields } : d));
     const debt = debts.find(d => d.id === id);
     if (!debt) return;
     try {
@@ -173,28 +185,32 @@ export function DataProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...debt, ...updatedFields })
       });
-      fetchData();
     } catch (err) {
-      setDebts(prev => prev.map(d => d.id === id ? { ...d, ...updatedFields } : d));
+      console.warn('API niet bereikbaar, schuld lokaal bijgewerkt.');
     }
   };
 
   const addContact = async (item) => {
+    const newItem = { ...item, id: Date.now() };
+    setContacts(prev => [...prev, newItem]);
     try {
       await fetch(`${API_BASE}/contacts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
+        body: JSON.stringify(newItem)
       });
-      fetchData();
     } catch (err) {
-      setContacts(prev => [...prev, { ...item, id: Date.now() }]);
+      console.warn('API niet bereikbaar, contact lokaal opgeslagen.');
     }
   };
 
   const deleteContact = async (id) => {
-    await fetch(`${API_BASE}/contacts/${id}`, { method: 'DELETE' }).catch(() => {});
     setContacts(prev => prev.filter(i => i.id !== id));
+    try {
+      await fetch(`${API_BASE}/contacts/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API niet bereikbaar, contact lokaal verwijderd.');
+    }
   };
 
   return (
